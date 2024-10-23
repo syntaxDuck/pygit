@@ -1,5 +1,6 @@
 import os
-import sys
+import hashlib
+import zlib
 from pathlib import Path
 
 
@@ -30,6 +31,18 @@ def init(repo: Path):
 
     write_file(git_path / "HEAD", b"ref: refs/heads/main")
     print(f"Initialized empty repo {repo}")
+
+
+def hash_obj(data: str, type: str, write: bool = True):
+    header = f"{type} {len(data)}".encode() + b"\0x00"
+    full_data = header + data
+    sha1 = hashlib.sha1(full_data).hexdigest()
+    if write:
+        path = Path(".git" / object / sha1[:2] / sha1[2:])
+        if not os.path.exists(path):
+            os.makedirs(path.parent, exist_ok=True)
+            write_file(path, zlib.compress(sha1))
+    return sha1
 
 
 if __name__ == "__main__":
